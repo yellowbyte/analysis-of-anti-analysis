@@ -50,7 +50,7 @@ int main(){
 
 ## Reviving Ptrace For Anti-Debugging
 
-The goal of this post is to see if we make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
+The goal of this post is to see if we make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in the import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/import_table.png"> 
@@ -179,7 +179,7 @@ As suspected, ptrace is no longer in the import table:
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/imports_after_dynamic_loading.png"> 
-<p align='center'><sub><strong>Figure 13: Compiled code of example above's Binary Ninja import table</strong></sub></p>
+<p align='center'><sub><strong>Figure 13: Compiled code of example above's import table in Binary Ninja</strong></sub></p>
 </div>
 
 wait a second...
@@ -362,7 +362,7 @@ Unless you explicitly give it writable permission, by default .text section will
 <p align='center'><sub><strong>Figure 19: readelf -S [binary]</strong></sub></p>
 </div>
 
-As seen above, the fact that our binary's .text section is writable fairly obvious (having the permission WAX or Writable, Allocate, eXecute). There is really no good benign reason for .text section to be writable and by having it so is also a big red flag.
+As seen above, the fact that our binary's .text section is writable can be discovered with tools like readelf, which shows it as having the permission WAX (Writable, Allocate, eXecute). There is really no good benign reason for .text section to be writable and by having it so is also a big red flag.
 
 ## File Format Hacks
 
@@ -370,7 +370,7 @@ The permission for .text section is encoded in the ELF file format, but is that 
 
 For understanding ELF file layout, the [wikipedia page for it](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) is a good start. 
 
-Binary file rewriting is easy with [Quarkslab's LIEF](lief.quarkslab.com). And looking at the gif below, we see that our suspicion is correct &mdash; rewriting the permission of .text doesn't affect execution at all while readelf now displays .text permission flag as AX (Allocate, eXecute). 
+Binary file rewriting is easily done with [Quarkslab's LIEF](lief.quarkslab.com). And looking at the gif below, we see that our suspicion is correct &mdash; rewriting the permission of .text doesn't affect execution at all while readelf now displays .text permission flag as AX (Allocate, eXecute). 
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/binary_rewrite.gif"> 

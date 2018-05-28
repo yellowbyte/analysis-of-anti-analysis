@@ -69,9 +69,9 @@ LD_PRELOAD is an environment variable that contains paths to shared libraries, a
 
 No one in their right mind will want to reverse engineer a binary from file offset 0 to the last byte. We always want to narrow down the scope of manual analysis. But even more importantly, we want to identify interesting locations to start reversing from since unless we can narrow down the scope to just a few short functions, just narrowing it down is not enough. 
 
-A thorough initial assessment can help us identify locations of interest. Examples of locations of interest are sites where obfuscations or anti-analysis techniques are applied. Defeating them early on will help expedite the manual reversing process. For example, if all the debugging deterrents are patched up, your debugging session will have higher fidelity to the actual execution of the binary, thus conclusions drawn from the debugging session will be more trustworthy. 
+A thorough initial assessment can help us identify locations of interest. Examples of locations of interest are sites where anti-debugging techniques are applied. Defeating them early on will help expedite the manual reversing process. For example, if all the debugging deterrents are patched up, your debugging session will have higher fidelity to the actual execution of the binary, thus conclusions drawn from the debugging session will be more trustworthy. 
 
-The main problems with ptrace as a practical anti-debugging solution are that it is __easy to identify__ and __easy to bypass__. A simple and superficial initial assessment, like looking at the import table for interesting functions, will be sufficient enough to identify the usage of ptrace. The fact that ptrace is easy to bypass cannot be helped; it's just a function call. But it is possible to make ptrace more inconspicuous such that initial assessment will not be able to pick up ptrace's presence. This will make it hard for the reverser to find where and how the binary becomes aware that it is under a debugging session, assumming that the reverser ever figure out that the binary has become aware in the first place :smiling_imp:.
+The main problems with ptrace as a practical anti-debugging solution are that it is __easy to identify__ and __easy to bypass__. A simple and superficial initial assessment, like looking at the import table for interesting functions, will be sufficient enough to identify the usage of ptrace. The fact that ptrace is easy to bypass cannot be helped; it's just a function call. But it is possible to make ptrace more inconspicuous such that initial assessment will not be able to pick up ptrace's presence. This will make it hard for the reverser to find where and how the binary becomes aware that it is under a debugging session, assumming that the reverser ever figure out that the binary has become aware in the first place.
 
 > Beside slowing down a reverser through intricate obfuscation means, we can also slow a reverser down by giving him or her as little hints as possible on where to start reversing from 
 
@@ -305,8 +305,6 @@ section .data
 <p align='center'><sub><strong>Example Code #5</strong></sub><br><sub><strong>nasm -f elf32 -o [object file] [assembly source]</strong></sub><br><sub><strong>ld -m elf_i386 -o [binary] [object file]</strong></sub></p>
 
 By using system call to invoke ptrace, there will be no remnant of ptrace in the import table or in the output of GNU strings! 
-
-:smiley::smiley::smiley:.
 
 But is it stealthy enough though? 
 

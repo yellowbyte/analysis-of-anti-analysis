@@ -14,7 +14,7 @@
 
 ## What Is Ptrace?
 
-Ptrace (process trace) is how a program can gain control of another program on Linux. It is commonly used by a debugger or a tracing program to attach and probe into another program's execution state. As seen below, both gdb and strace contains ptrace in their dynamic symbol table: 
+Ptrace (process trace) is how a program can gain control of another program on Linux. It is commonly used by a debugger or a tracing program to attach and probe into another program's execution state. As seen below, both gdb and strace contain ptrace in their dynamic symbol table: 
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/gdb_ptrace_usage.png"> 
@@ -50,7 +50,7 @@ int main(){
 
 ## Reviving Ptrace For Anti-Debugging
 
-The goal of this post is to see if we make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in the import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
+The goal of this post is to see if we can make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in the import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/import_table.png"> 
@@ -61,9 +61,9 @@ The goal of this post is to see if we make ptrace a practical solution for anti-
 <p align='center'><sub><strong>Figure 5: Using Binary Ninja to NOP function call</strong></sub></p>
 </div>
 
-Even without fancy tool like Binary Ninja, you can still easily patch it with any hex editor (will just take a little longer to calculate the file offset of the ptrace call from its virtual address). There are other ways to bypass ptrace too. For example, another popular method is preloading with either LD_PRELOAD or /etc/ld.so.preload.   
+Even without fancy tool like Binary Ninja, you can still patch it with any hex editor. There are other ways to bypass ptrace too. For example, another popular method is preloading with either LD_PRELOAD or /etc/ld.so.preload.   
 
-LD_PRELOAD is an environment variable that contains paths to shared libraries, and if set, the dynamic loader will load them before other shared libraries. /etc/ld.so.preload can also be used to achieve the same effect except that it is a file. For more information on their differences check out this [post](https://minipli.wordpress.com/2009/07/17/ld_preload-vs-etcld-so-preload/). Essentially, preloading with either LD_PRELOAD or /etc/ld.so.preload allows us to bypass ptrace since we can set own implementation of ptrace to be ran instead.  
+LD_PRELOAD is an environment variable that can contain paths to shared libraries, and if it does, the dynamic loader will load them before other shared libraries. /etc/ld.so.preload can also be used to achieve the same effect except that it is a file. For more information on their differences check out this [post](https://minipli.wordpress.com/2009/07/17/ld_preload-vs-etcld-so-preload/). Essentially, preloading with either LD_PRELOAD or /etc/ld.so.preload allows us to bypass ptrace since we can set own implementation of ptrace to be ran instead.  
 
 ## Approach
 
@@ -71,7 +71,7 @@ No one in their right mind will want to reverse engineer a binary from file offs
 
 A thorough initial assessment can help us identify locations of interest. Examples of locations of interest are sites where anti-debugging techniques are applied. Defeating them early on will help expedite the manual reversing process. For example, if all the debugging deterrents are patched up, your debugging session will have higher fidelity to the actual execution of the binary, thus conclusions drawn from the debugging session will be more trustworthy. 
 
-The main problems with ptrace as a practical anti-debugging solution are that it is __easy to identify__ and __easy to bypass__. A simple and superficial initial assessment, like looking at the import table for interesting functions, will be sufficient enough to identify the usage of ptrace. The fact that ptrace is easy to bypass cannot be helped; it's just a function call. But it is possible to make ptrace more inconspicuous such that initial assessment will not be able to pick up ptrace's presence. This will make it hard for the reverser to find where and how the binary becomes aware that it is under a debugging session, assumming that the reverser ever figure out that the binary has become aware in the first place.
+The main problems with ptrace as a practical anti-debugging solution are that it is __easy to identify__ and __easy to bypass__. A simple and superficial initial assessment, like looking at the import table for interesting functions, will be sufficient enough to identify usage of ptrace. The fact that ptrace is easy to bypass cannot be helped; it's just a function call. But it is possible to make ptrace more inconspicuous such that initial assessment will not be able to pick up ptrace's presence.
 
 > Beside slowing down a reverser through intricate obfuscation means, we can also slow a reverser down by giving him or her as little hints as possible on where to start reversing from 
 
@@ -308,7 +308,7 @@ By using system call to invoke ptrace, there will be no remnant of ptrace in the
 
 But is it stealthy enough though? 
 
-Functions provided by GNU C Library (glibc) have a much cleaner and easier-to-use interface than directly accessing the available system calls in the Linux kernel. In fact, many glibc functions are wrappers around system calls (Figure 17) so directly using system call in user code is somewhat suspicious. Once a reverser recognizes the assembly instruction corresponding to system call, his or her's first instinct should be to figure out what system call is being made &mdash; and that wouldn't be hard at all by inspecting the value assigned to EAX register before executing the system call instruction. This process can also easily be automated. In fact, [someone built a plugin](https://github.com/carstein/Syscaller) for Binary Ninja to do just that: identifying what system calls are made in a binary.
+Functions provided by GNU C Library (glibc) have a much cleaner and easier-to-use interface than directly accessing the available system calls in the Linux kernel. In fact, many glibc functions are wrappers around system calls (Figure 17) so directly using system call in user code is somewhat suspicious. Once a reverser recognizes the assembly instruction corresponding to system call, his or her's first instinct should be to figure out what system call is being made &mdash; and that wouldn't be hard at all by inspecting the value assigned to EAX register before executing the system call instruction. This process can also be automated. In fact, [someone built a plugin](https://github.com/carstein/Syscaller) for Binary Ninja to do just that: identifying what system calls are made in a binary.
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/calling_library_function.png" width="613" height="588"> 
@@ -319,7 +319,7 @@ Functions provided by GNU C Library (glibc) have a much cleaner and easier-to-us
 
 Overall the last attempt did a good job hiding the call to ptrace, with its only drawback being the ease of identifying system call instruction. To build on top of our previous work, let's try to obfuscate the system call instruction, 'int 0x80', by making it not show up in the disassembly. This can be done through a technique call "Self-Modifying Code."
 
-Unlike fancy biology jargons that make no sense to a layman (xeroderma pigmentosum? anyone?), this technique is quite literal to its name: the binary's executable code will alter itself during runtime. Basically, we can have the binary write in the system call instruction during runtime before executing it. This way, on disk, the system call instruction never existed. The system call instruction will only reveal itself during runtime when execution reaches a certain point. 
+Unlike fancy biology jargons that make no sense to a layman (xeroderma pigmentosum? anyone?), this technique is quite literal to its name: binary's executable code will alter itself during runtime. Basically, we can have the binary write in the system call instruction during runtime before executing it. This way, on disk, the system call instruction never existed. The system call instruction will only reveal itself during runtime when execution reaches a certain point. 
 
 ```asm
 ...
@@ -351,7 +351,7 @@ The code snippet shown in Example Code #6 is where the code in Example Code #5 n
 <p align='center'><sub><strong>Figure 18: There's no longer any traces of ptrace system call in the disassembly</strong></sub></p>
 </div>
 
-Note that for this code to work, we need to set the .text section (where executable code resides) to be writable. This can be done during the linking phase by passing the -N flag to the ld command like such: ld -N -m elf_i386 -o [binary] [object file].
+Note that for this code to work, we need to set .text section (where executable code resides) to be writable. This can be done during the linking phase by passing the -N flag to the ld command like such: ld -N -m elf_i386 -o [binary] [object file].
 
 Unless you explicitly give it writable permission, by default .text section will only have allocate and executable permission. The permission sets for .text section is encoded into the ELF file and can be easily queried (Figure 19).
 
@@ -360,11 +360,11 @@ Unless you explicitly give it writable permission, by default .text section will
 <p align='center'><sub><strong>Figure 19: readelf -S [binary]</strong></sub></p>
 </div>
 
-As seen above, the fact that our binary's .text section is writable can be discovered with tools like readelf, which shows it as having the permission WAX (Writable, Allocate, eXecute). There is really no good benign reason for .text section to be writable and by having it so is also a big red flag.
+As seen above, the fact that our binary's .text section is writable can be discovered with tools like readelf, which shows it as having the permission WAX (Writable, Allocate, eXecute). There is really no good benign reason for .text section to be writable and by having it so is also a red flag.
 
 ## File Format Hacks
 
-The permission for .text section is encoded in the ELF file format, but is that information required for the loader and program execution? Not everything in an ELF file is required to run the executable. What I mean by that is that you can zero out bytes from an ELF executable and that executable will still run exactly the same as before. So if the bytes representing the permission for .text section are part of the bytes that we can zero out without affecting execution, then we can manually change the permission so that tools like readelf will display incorrect information without paying any penalty. 
+The permission for .text section is encoded in the ELF file format, but is that information required for the loader and program execution? Not everything in an ELF file is required to run the executable. What I mean by that is that you can zero out bytes from an ELF executable and that executable will still run exactly the same as before. So if the bytes representing the permission for .text section are part of the bytes that we can zero out without affecting execution, then we can manually change the permission so that tools like readelf will display incorrect information. 
 
 For understanding ELF file layout, the [wikipedia page for it](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) is a good start. 
 
@@ -401,6 +401,6 @@ For all our code examples so far, if you haven't noticed yet, print "not being t
 
 With just ptrace, although we can achieve the shell session above, we can't differentiate between gdb and strace. As a result, if we don't want either strace to discover the activity we are trying to hide or that ptrace is involved, we need something else to uniquely detect usage of strace or a different technique altogether to hide our activity.  
 
-Overall the combinations of the approaches above should hide ptrace's presence pretty well from initial assessment tools. To uncover where ptrace is deployed (if reverser used strace and discovered usage of ptrace) or why the debugger is not working as expected, we force the reverser to spend more time doing manual reversing. We can make the manual reversing process even harder by applying software hardening or obfuscation. A good overview of software obfuscation can be found in [Practical Reverse Engineering, Ch.5](https://www.amazon.com/Practical-Reverse-Engineering-Reversing-Obfuscation/dp/1118787315/ref=sr_1_1?ie=UTF8&qid=1527387278&sr=8-1&keywords=practical+reverse+engineering).
+Overall the combinations of the approaches above should hide ptrace's presence pretty well from initial assessment tools. To uncover where ptrace is deployed (if reverser uses strace and discovers usage of ptrace) or why the debugger is not working as expected, we force the reverser to spend more time doing manual reversing. We can make the manual reversing process even harder by applying software hardening or obfuscation. A good overview of software obfuscation can be found in [Practical Reverse Engineering, Ch.5](https://www.amazon.com/Practical-Reverse-Engineering-Reversing-Obfuscation/dp/1118787315/ref=sr_1_1?ie=UTF8&qid=1527387278&sr=8-1&keywords=practical+reverse+engineering).
 
-As for how we can apply software obfuscation to hide ptrace better, the self-modifying portion of the code is a good place to start. Looking back at Example Code #6 that shows the self-modifying code, the system call opcode that is assigned to AX register and the systemcall label that is assigned to EDI register could be the achilles heel that makes all our previous efforts go to waste. When compiled, the systemcall label will transform into an absolute address pointing to where the executable code will be rewritten. That address will be within .text section's address range. If a reverser is able to take a note of that, he or she will immediately shift their attention to that portion of code and ptrace will be uncovered soon after. So if we want, we can obfuscate system call opcode and systemcall label such that their values are not revealed until runtime. On top of that, a less ad hoc obfuscation technique such as code virtualization or junk code insertion can also be applied to make the overall reversing process a living hell.
+As for how we can apply software obfuscation to hide ptrace better, the self-modifying portion is a good place to start. Looking back at Example Code #6 that shows the self-modifying code, the system call opcode that is assigned to AX register and the systemcall label that is assigned to EDI register could be the achilles heel that makes all our previous efforts go to waste. When compiled, the systemcall label will transform into an absolute address pointing to where the executable code will be rewritten. That address will be within .text section's address range. If a reverser is able to take a note of that, he or she will immediately shift their attention to that portion of code and ptrace will be uncovered soon after. So if we want, we can obfuscate system call opcode and systemcall label such that their values are not revealed until runtime. On top of that, a less ad hoc obfuscation technique such as code virtualization or junk code insertion can also be applied to make the overall reversing process a living hell.

@@ -117,7 +117,7 @@ And if we statically link and strip our binary, we get exactly what we wanted:
 
 Now ptrace will no longer show up in the import table and is perfectly hidden. Or is it...?  
 
-It's true that ptrace will no longer show up in the import table, but that rings true for all other glibc functions your code uses as well. Seeing an empty or near empty import table is also useful knowledge to a reverser. It tells him or her that the binary is statically-linked or some sort of obfuscation is at play. Either way, it screams to a reverser: figure out what library functions are hidden! And with the help of [IDA FLIRT](https://reverseengineering.stackexchange.com/questions/175/what-is-a-flirt-signature), it won't take long before a reverser figures out that ptrace is being used.
+It's true that ptrace will no longer show up in the import table, but that rings true for all other glibc functions your code uses as well. Seeing an empty or near empty import table is also useful knowledge to a reverser. It tells him or her that the binary is statically-linked or some sort of obfuscation is at play. Either way, it screams to a reverser: figure out what library functions are hidden! And with the help of [IDA FLIRT](https://reverseengineering.stackexchange.com/questions/175/what-is-a-flirt-signature), it won't take long before a reverser figures out that ptrace is being used. You can leverage Binary Ninja's [Nampa](https://github.com/thebabush/nampa) to apply FLIRT signatures on a binary to identify statically-linked library functions.
 
 ## Packing
 

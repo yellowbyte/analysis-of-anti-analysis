@@ -371,7 +371,7 @@ For understanding ELF file layout, the [wikipedia page for it](https://en.wikipe
 Binary file rewriting is easily done with [Quarkslab's LIEF](lief.quarkslab.com). And looking at the gif below, we see that our suspicion is correct &mdash; rewriting the permission of .text doesn't affect execution at all while readelf now displays .text permission flag as AX (Allocate, eXecute). 
 
 <div align='center'> 
-<img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/binary_rewrite.gif"> 
+<img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/nowap.gif"> 
 <p align='center'><sub><strong>Figure 20: binary rewriting made easy with <a href="lief.quarkslab.com">LIEF</a></strong></sub></p>
 </div>
 

@@ -50,7 +50,7 @@ int main(){
 
 ## Reviving Ptrace For Anti-Debugging
 
-The goal of this post is to see if we can make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in the import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
+The goal of this post is to make ptrace a practical solution for anti-debugging. I am not sure about you but ptrace is the first anti-debugging technique I have learned. In fact, it is the first anti- anything that I have came across. The use of it as a debugging deterrent is well known to say the least. But that is not the main reason why you don't see it outside of a simple reversing challenge. Other anti-reversing technique such as code virtualization has also been known for a while but is still a relevant technique used in commercial software product to deter people from reversing it. What distinguishes anti-debugging with ptrace from code virtualization is how easy it is to __identify__ and __bypass__ the former. For example, if a binary uses ptrace, it will show up in the import table of any modern disassembler like IDA Pro and Binary Ninja (Figure 4). And once you identified it, it is also really easy to bypass it by NOP-ing the call (Figure 5). 
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/import_table.png"> 
@@ -63,7 +63,7 @@ The goal of this post is to see if we can make ptrace a practical solution for a
 
 Even without fancy tool like Binary Ninja, you can still patch it with any hex editor. There are other ways to bypass ptrace too. For example, another popular method is preloading with either LD_PRELOAD or /etc/ld.so.preload.   
 
-LD_PRELOAD is an environment variable that can contain paths to shared libraries, and if it does, the dynamic loader will load them before other shared libraries. /etc/ld.so.preload can also be used to achieve the same effect except that it is a file. For more information on their differences check out this [post](https://minipli.wordpress.com/2009/07/17/ld_preload-vs-etcld-so-preload/). Essentially, preloading with either LD_PRELOAD or /etc/ld.so.preload allows us to bypass ptrace since we can set own implementation of ptrace to be ran instead.  
+LD_PRELOAD is an environment variable that can contain paths to shared libraries, and if it does, the dynamic loader will load them before other shared libraries. /etc/ld.so.preload can also be used to achieve the same effect except that it is a file. For more information on their differences check out this [post](https://minipli.wordpress.com/2009/07/17/ld_preload-vs-etcld-so-preload/). Essentially, preloading with either LD_PRELOAD or /etc/ld.so.preload allows us to bypass ptrace since we can set our own implementation of ptrace to be ran instead.  
 
 ## Approach
 
@@ -185,13 +185,13 @@ As suspected, ptrace is no longer in the import table:
 wait a second...
 
 <div align='center'> 
-<img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/strings_after_dynamic_loading.png"> 
+<img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/after_dynamic_loading.png"> 
 <p align='center'><sub><strong>Figure 14: gcc -o [binary] [source] -ldl && strings [binary] | grep -A3 -B3 ptrace</strong></sub></p>
 </div>
 
 Although ptrace doesn't shows up in the import table, it's shows up when you run GNU strings on the binary. This is not any better...
 
-The reason it shows up in GNU strings is because the second argument to dlsym, the string "ptrace", will be placed in the .data section after compilation. To make gcc not place the "ptrace" string in the .data section, we can simply make it into a local variable as seen in Code Example #3:
+The reason it shows up in GNU strings is because the second argument to dlsym, the string "ptrace", will be placed in the .data section after compilation. To make gcc not place the "ptrace" string in the .data section, we can simply make it into a character array as seen in Code Example #3:
 
 ```c
 #include <stdlib.h>
@@ -308,7 +308,7 @@ By using system call to invoke ptrace, there will be no remnant of ptrace in the
 
 But is it stealthy enough though? 
 
-Functions provided by GNU C Library (glibc) have a much cleaner and easier-to-use interface than directly accessing the available system calls in the Linux kernel. In fact, many glibc functions are wrappers around system calls (Figure 17) so directly using system call in user code is somewhat suspicious. Once a reverser recognizes the assembly instruction corresponding to system call, his or her's first instinct should be to figure out what system call is being made &mdash; and that wouldn't be hard at all by inspecting the value assigned to EAX register before executing the system call instruction. This process can also be automated. In fact, [someone built a plugin](https://github.com/carstein/Syscaller) for Binary Ninja to do just that: identifying what system calls are made in a binary.
+Functions provided by GNU C Library (glibc) have a much cleaner and easier-to-use interface than directly accessing the available system calls in the Linux kernel. In fact, many glibc functions are wrappers around system calls (Figure 17) so directly using system call in user code is somewhat suspicious. Once a reverser recognizes the assembly instruction corresponding to system call, his or her's first instinct should be to figure out what system call is being made &mdash; and that wouldn't be hard at all by inspecting the value assigned to EAX register before executing the system call instruction. This process can also be automated. In fact, [someone made a plugin](https://github.com/carstein/Syscaller) for Binary Ninja to do just that: identifying what system calls are made in a binary.
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/calling_library_function.png" width="613" height="588"> 
@@ -353,14 +353,12 @@ The code snippet shown in Example Code #6 is where the code in Example Code #5 n
 
 Note that for this code to work, we need to set .text section (where executable code resides) to be writable. This can be done during the linking phase by passing the -N flag to the ld command like such: ld -N -m elf_i386 -o [binary] [object file].
 
-Unless you explicitly give it writable permission, by default .text section will only have allocate and executable permission. The permission sets for .text section is encoded into the ELF file and can be easily queried (Figure 19).
+The permission sets for .text section is encoded into the ELF file and can be easily queried (Figure 19). Unless you explicitly give it writable permission, by default .text section will only have allocate and executable permission. There is really no good benign reason for .text section to be writable and by having it so is also a red flag.
 
 <div align='center'> 
 <img src="https://github.com/yellowbyte/posts/blob/master/research/hiding_call_to_ptrace/wax.png"> 
 <p align='center'><sub><strong>Figure 19: readelf -S [binary]</strong></sub></p>
 </div>
-
-As seen above, the fact that our binary's .text section is writable can be discovered with tools like readelf, which shows it as having the permission WAX (Writable, Allocate, eXecute). There is really no good benign reason for .text section to be writable and by having it so is also a red flag.
 
 ## File Format Hacks
 

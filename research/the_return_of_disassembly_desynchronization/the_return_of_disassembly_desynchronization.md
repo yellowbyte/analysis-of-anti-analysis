@@ -63,7 +63,7 @@ The purposely placed 0xeb data byte (also opcode for JMP) is disassembled as par
 
 We can hide the \_start function from spilling into culprit function by adding another 0xeb data byte right before \_start. This results in the disassembly to be even more incorrect as none of the basic blocks steaming from the false branch contains a genuine instruction: 
 <div align='center'> 
-<img src="https://github.com/yellowbyte/temp/blob/master/opaque/two_rogue_bytes.png"> 
+<img src="https://github.com/yellowbyte/analysis-of-anti-analysis/blob/master/research/the_return_of_disassembly_desynchronization/two_rogue_bytes.png"> 
 <p align='center'><sub><strong>Figure 2: Disassembly of culprit function with added data byte before _start</strong></sub></p>
 </div>
 

@@ -146,7 +146,7 @@ Older versions of IDA are vulnerable to disassembly desynchronization too, but i
 
 How about let's make sure the false branch is always taken? Will IDA try to disassemble the data byte then? Let's find out:
 <div align='center'> 
-<img src="https://github.com/yellowbyte/analysis-of-anti-analysis/blob/master/research/the_return_of_disassembly_desynchronization/falsify_it.png"> 
+<img src="https://github.com/yellowbyte/analysis-of-anti-analysis/blob/master/research/the_return_of_disassembly_desynchronization/falsify.png"> 
 <p align='center'><sub><strong>Figure 5: IDA doesn't try to disassemble data byte even though it will be reached during execution</strong></sub></p>
 </div>
 

@@ -11,7 +11,7 @@
 
 Disassembly desynchronization is a well-known anti-disassembly technique used to induce incorrect disassembly. Newer disassembler like Binary Ninja is still vulnerable to it. More established disassembler like IDA has a fix for it, but the fix inadvertently makes another anti-disassembly technique more stealthy and can also be used to hide instructions. In summary, that's what this post will be about. And without further ado, let's start. 
 
-__Disclaimer:__ functions identification is still an unsolved problem. Obviously, adding anti-disassembly to the mix only makes the problem even more of a headache. So in no way is this post trying to poke fun at the current state of reverse engineering tools for not handling this particular edge case correctly. 
+__Disclaimer:__ CFG (control-flow graph) recovery and functions identification are still unsolved problems. Obviously, adding anti-disassembly to the mix only makes them even more of a headache. So in no way is this post trying to poke fun at the current state of reverse engineering tools for not handling this particular edge case correctly. 
 
 ## How It Works
 Disassembly desynchronization causes incorrect disassembly by placing data bytes at locations that a disassembler will expect to contain instruction bytes. Such magical locations can be found following control-flow altering instructions (e.g. [CALL](https://c9x.me/x86/html/file_module_x86_id_26.html) and [JCC](https://c9x.me/x86/html/file_module_x86_id_146.html)). For example, execution doesn't necessary have to return to the instruction following a CALL after the subroutine finishes; the subroutine's return address can be purposely altered during subroutine's execution, which grants us the freedom to place data bytes following CALL to disrupt disassembly since execution will never flow there. Same idea with unconditional [JMP](https://c9x.me/x86/html/file_module_x86_id_147.html) that is disguised as a JCC instruction, as seen in this assembly code snippet:
@@ -102,7 +102,7 @@ main:
 ```
 <p align='center'><sub><strong>Example Code #2</strong></sub><br><sub><strong>nasm -f elf32 -o [object] [assembly] && gcc -m32 -o [binary] [object]</strong></sub></p>
 
-Opaque predicate like the one above is __resilient__ against Binary Ninja's dataflow analysis but it is not __stealthy__ against human detection. A human glancing over the disassembly can still easily tell that EAX will always be zero. To make it stealthy, we need a non-trivial opaque predicate, which can be achieved using algebraic predicate that is based on well-known mathematical axioms like `x(x+1) % 2 == 0`. 
+Opaque predicate like the one above is __resilient__ against Binary Ninja's dataflow analysis but it is not __stealthy__ against human detection. A human glancing over the disassembly can still easily tell that EAX will always be zero. To make it stealthy, we need a non-trivial opaque predicate, which can be achieved using algebraic predicate like `x(x+1) % 2 == 0`. 
 
 We can replace our old opaque predicate `xor eax, eax` with this new one while passing the value for the unknown variable 'x' as function argument to satisfy both resiliency and stealthiness:
 ```asm
@@ -259,6 +259,6 @@ Both the true and false branch in culprit can be taken. If the false branch is t
 
 ## Conclusion
 
-Whether you are using disassembly desynchronization to mess with disassembly, to hide instructions, or to hide overlapped instructions, its resiliency and stealthiness is mainly dependent on the employed opaque predicate. 
+Whether you are using disassembly desynchronization to mess with disassembly, to hide instructions, or to hide overlapped instructions, its resiliency and stealthiness are mainly dependent on the employed opaque predicate. 
 
 More on opaque predicate in the next post. Stay tuned!

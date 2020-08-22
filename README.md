@@ -1,4 +1,4 @@
-#DEPRECATED. THIS BLOG IS NO LONGER A REPO: https://yellowbyte.github.io/ 
+# DEPRECATED. THIS BLOG IS NO LONGER A REPO: https://yellowbyte.github.io/ 
 
 # <p align='center'> Analysis of Anti-Analysis </p>
 

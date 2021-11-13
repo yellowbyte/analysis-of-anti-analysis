@@ -1,5 +1,3 @@
-# DEPRECATED. THIS BLOG IS NO LONGER A REPO: https://yellowbyte.github.io/ 
-
 # <p align='center'> Analysis of Anti-Analysis </p>
 
 ### [The Return of Disassembly Desynchronization](research/the_return_of_disassembly_desynchronization/the_return_of_disassembly_desynchronization.md)
